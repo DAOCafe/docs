@@ -1,0 +1,110 @@
+---
+title: DAO Café Indexer
+description: High-performance GraphQL API for the CreateDAO protocol
+---
+
+# DAO Café Indexer
+
+The DAO Café Indexer is a real-time GraphQL API that indexes all governance activity from DAOs created via the CreateDAO protocol.
+
+## Endpoint
+
+```
+https://dao.cafe/graphql
+```
+
+<Card title="Open GraphQL Playground" icon="circle-play" href="https://dao.cafe/graphql">
+  Try queries interactively in the browser
+</Card>
+
+## What Gets Indexed
+
+The indexer tracks all events from the CreateDAO factory and child contracts:
+
+| Entity | Description |
+|--------|-------------|
+| **DAOs** | All DAOs deployed via the factory, including governance settings |
+| **Proposals** | Governance proposals with full calldata and vote tallies |
+| **Votes** | Individual votes with support type, weight, and reason |
+| **Delegates** | Delegation relationships between addresses |
+| **Token Holders** | Token balances and voting power per holder |
+| **Settings Changes** | Audit log of governance parameter updates |
+
+## Supported Chains
+
+| Network | Chain ID | Factory Address |
+|---------|----------|-----------------|
+| Base Mainnet | 8453 | `0xd141662F4b788F28B2a0769a6d3f243D046B571f` |
+| Sepolia | 11155111 | `0xd141662F4b788F28B2a0769a6d3f243D046B571f` |
+
+## Data Schema
+
+### DAO
+
+The main entity representing a governance organization.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID: `chainId_governorAddress` |
+| `chainId` | Int | Network chain ID |
+| `governor` | Address | Governor contract address |
+| `token` | Address | Governance token address |
+| `timelock` | Address | Timelock controller address |
+| `name` | String | DAO name |
+| `tokenName` | String | Token name |
+| `tokenSymbol` | String | Token symbol |
+| `totalSupply` | BigInt | Total token supply |
+| `proposalCount` | Int | Number of proposals created |
+| `totalVoters` | Int | Addresses with voting power |
+| `manager` | Address | Manager address (optional) |
+| `votingDelay` | BigInt | Blocks before voting starts |
+| `votingPeriod` | BigInt | Voting duration in blocks |
+| `proposalThreshold` | BigInt | Tokens needed to propose |
+| `quorumNumerator` | BigInt | Quorum percentage numerator |
+| `createdAt` | BigInt | Block timestamp |
+
+### Proposal
+
+Governance proposals with voting data.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID: `chainId_governor_proposalId` |
+| `daoId` | String | Reference to parent DAO |
+| `proposer` | Address | Address that created the proposal |
+| `description` | String | Proposal description/title |
+| `state` | Enum | PENDING, ACTIVE, CANCELED, DEFEATED, SUCCEEDED, QUEUED, EXPIRED, EXECUTED |
+| `votesFor` | BigInt | Total votes in favor |
+| `votesAgainst` | BigInt | Total votes against |
+| `votesAbstain` | BigInt | Total abstain votes |
+| `voteStart` | BigInt | Voting start timestamp |
+| `voteEnd` | BigInt | Voting end timestamp |
+
+### Vote
+
+Individual votes cast on proposals.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID |
+| `proposalId` | String | Reference to proposal |
+| `voter` | Address | Voter address |
+| `support` | Enum | AGAINST, FOR, ABSTAIN |
+| `weight` | BigInt | Voting power used |
+| `reason` | String | Vote reason (optional) |
+
+### Delegate
+
+Delegation relationships.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `delegator` | Address | Address delegating votes |
+| `toDelegate` | Address | Address receiving delegation |
+| `token` | Address | Token being delegated |
+
+## Next Steps
+
+<Card title="Query DAOs" icon="magnifying-glass" href="/indexer/query-daos">
+  Learn all the ways to fetch DAO data from the API
+</Card>

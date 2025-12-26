@@ -1,0 +1,230 @@
+---
+title: Query Votes & Voting Power
+description: Methods for fetching votes and checking voting power
+---
+
+# Query Votes & Voting Power
+
+This page covers how to fetch vote data and check voting power from the DAO Café GraphQL API.
+
+**Endpoint:** `https://dao.cafe/graphql`
+
+---
+
+## Get Votes by Proposal
+
+Fetch all votes cast on a specific proposal.
+
+```graphql
+query GetVotesByProposal($proposalId: String!) {
+  votes(where: { proposalId: $proposalId }, orderBy: "weight", orderDirection: "desc") {
+    items {
+      id
+      voter
+      support
+      weight
+      reason
+      createdAt
+    }
+  }
+}
+```
+
+---
+
+## Get Votes by Voter
+
+Find all votes cast by a specific address across all proposals.
+
+```graphql
+query GetVotesByVoter($voter: String!) {
+  votes(where: { voter: $voter }, orderBy: "createdAt", orderDirection: "desc") {
+    items {
+      id
+      proposalId
+      daoId
+      support
+      weight
+      reason
+      createdAt
+    }
+  }
+}
+```
+
+---
+
+## Get Votes by Support Type
+
+Filter votes by how they voted.
+
+### FOR Votes
+
+```graphql
+query GetForVotes($proposalId: String!) {
+  votes(where: { proposalId: $proposalId, support: FOR }) {
+    items {
+      voter
+      weight
+      reason
+    }
+  }
+}
+```
+
+### AGAINST Votes
+
+```graphql
+query GetAgainstVotes($proposalId: String!) {
+  votes(where: { proposalId: $proposalId, support: AGAINST }) {
+    items {
+      voter
+      weight
+      reason
+    }
+  }
+}
+```
+
+### ABSTAIN Votes
+
+```graphql
+query GetAbstainVotes($proposalId: String!) {
+  votes(where: { proposalId: $proposalId, support: ABSTAIN }) {
+    items {
+      voter
+      weight
+      reason
+    }
+  }
+}
+```
+
+<Note>
+Support types: `FOR`, `AGAINST`, `ABSTAIN`
+</Note>
+
+---
+
+## Check Voting Power
+
+Query token holders to check voting power for a specific address.
+
+### Get Voting Power for Address
+
+```graphql
+query GetVotingPower($daoId: String!, $holder: String!) {
+  tokenHolders(where: { daoId: $daoId, holder: $holder }) {
+    items {
+      holder
+      balance
+      votes
+      updatedAt
+    }
+  }
+}
+```
+
+The `votes` field represents the actual voting power (may differ from balance due to delegation).
+
+---
+
+## Get Top Voters by Voting Power
+
+Find the addresses with the most voting power in a DAO.
+
+```graphql
+query GetTopVoters($daoId: String!) {
+  tokenHolders(
+    where: { daoId: $daoId }
+    orderBy: "votes"
+    orderDirection: "desc"
+    limit: 20
+  ) {
+    items {
+      holder
+      balance
+      votes
+    }
+  }
+}
+```
+
+---
+
+## Get Top Token Holders by Balance
+
+Find the addresses with the most tokens (may differ from voting power).
+
+```graphql
+query GetTopHolders($daoId: String!) {
+  tokenHolders(
+    where: { daoId: $daoId }
+    orderBy: "balance"
+    orderDirection: "desc"
+    limit: 20
+  ) {
+    items {
+      holder
+      balance
+      votes
+    }
+  }
+}
+```
+
+---
+
+## Get All Token Holders with Voting Power
+
+Find all addresses that have voting power > 0.
+
+```graphql
+query GetActiveVoters($daoId: String!) {
+  tokenHolders(
+    where: { daoId: $daoId }
+    orderBy: "votes"
+    orderDirection: "desc"
+    limit: 100
+  ) {
+    items {
+      holder
+      votes
+    }
+  }
+}
+```
+
+---
+
+## Available Vote Fields Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID |
+| `proposalId` | String | Reference to proposal |
+| `daoId` | String | Reference to DAO |
+| `chainId` | Int | Network chain ID |
+| `governor` | Address | Governor contract |
+| `voter` | Address | Voter address |
+| `support` | Enum | FOR, AGAINST, ABSTAIN |
+| `weight` | BigInt | Voting power used |
+| `reason` | String | Vote reason (optional) |
+| `params` | Hex | Extra params (optional) |
+| `createdAt` | BigInt | Vote timestamp |
+| `blockNumber` | BigInt | Vote block |
+| `transactionHash` | Hex | Vote tx hash |
+
+## Available Token Holder Fields Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID |
+| `daoId` | String | Reference to DAO |
+| `chainId` | Int | Network chain ID |
+| `token` | Address | Token contract |
+| `holder` | Address | Holder address |
+| `balance` | BigInt | Token balance |
+| `votes` | BigInt | Voting power |
+| `updatedAt` | BigInt | Last update |
+| `blockNumber` | BigInt | Last update block |

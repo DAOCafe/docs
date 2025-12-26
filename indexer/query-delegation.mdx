@@ -1,0 +1,188 @@
+---
+title: Query Delegation
+description: Methods for fetching delegation relationships
+---
+
+# Query Delegation
+
+This page covers how to fetch delegation data from the DAO Café GraphQL API.
+
+**Endpoint:** `https://dao.cafe/graphql`
+
+---
+
+## How Delegation Works
+
+In governance tokens (ERC20Votes), holders can delegate their voting power to another address:
+- **Delegator**: The address that owns tokens and delegates voting power
+- **Delegate**: The address that receives voting power and can vote
+
+<Note>
+Self-delegation is common — users must delegate to themselves to activate their voting power.
+</Note>
+
+---
+
+## Get Delegations by DAO
+
+Fetch all delegation relationships in a DAO.
+
+```graphql
+query GetDAODelegations($daoId: String!) {
+  delegates(where: { daoId: $daoId }, limit: 100) {
+    items {
+      delegator
+      toDelegate
+      token
+      updatedAt
+    }
+  }
+}
+```
+
+---
+
+## Get Delegations by Delegator
+
+Find who a specific address has delegated to.
+
+```graphql
+query GetDelegationsByDelegator($delegator: String!) {
+  delegates(where: { delegator: $delegator }) {
+    items {
+      daoId
+      token
+      toDelegate
+      updatedAt
+    }
+  }
+}
+```
+
+This query shows which addresses a user has delegated their voting power to across all DAOs.
+
+---
+
+## Get Delegations to a Delegate
+
+Find all addresses that have delegated to a specific delegate.
+
+```graphql
+query GetDelegationsToDelegate($toDelegate: String!, $daoId: String!) {
+  delegates(where: { toDelegate: $toDelegate, daoId: $daoId }) {
+    items {
+      delegator
+      token
+      updatedAt
+    }
+  }
+}
+```
+
+This is useful for finding all the delegators backing a specific delegate.
+
+---
+
+## Check if Address Has Delegated
+
+Check if a specific address has delegated in a specific DAO.
+
+```graphql
+query CheckDelegation($delegator: String!, $daoId: String!) {
+  delegates(where: { delegator: $delegator, daoId: $daoId }) {
+    items {
+      toDelegate
+      updatedAt
+    }
+  }
+}
+```
+
+---
+
+## Get Top Delegates
+
+Find addresses receiving the most delegations. Combine with token holder data for voting power.
+
+```graphql
+query GetTopDelegates($daoId: String!) {
+  tokenHolders(
+    where: { daoId: $daoId }
+    orderBy: "votes"
+    orderDirection: "desc"
+    limit: 20
+  ) {
+    items {
+      holder
+      balance
+      votes
+    }
+  }
+}
+```
+
+<Note>
+Addresses with `votes > balance` have received delegations from others.
+</Note>
+
+---
+
+## Get Delegation with DAO Context
+
+Fetch delegations along with DAO information.
+
+```graphql
+query GetDelegationsWithDAO($delegator: String!) {
+  delegates(where: { delegator: $delegator }) {
+    items {
+      toDelegate
+      updatedAt
+      dao {
+        id
+        name
+        tokenSymbol
+      }
+    }
+  }
+}
+```
+
+---
+
+## Get Recent Delegation Changes
+
+Find the most recent delegation updates.
+
+```graphql
+query GetRecentDelegations($daoId: String!) {
+  delegates(
+    where: { daoId: $daoId }
+    orderBy: "updatedAt"
+    orderDirection: "desc"
+    limit: 20
+  ) {
+    items {
+      delegator
+      toDelegate
+      updatedAt
+      blockNumber
+    }
+  }
+}
+```
+
+---
+
+## Available Delegate Fields Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID: `chainId_token_delegator` |
+| `daoId` | String | Reference to DAO |
+| `chainId` | Int | Network chain ID |
+| `token` | Address | Token contract |
+| `delegator` | Address | Address delegating |
+| `toDelegate` | Address | Address receiving delegation |
+| `updatedAt` | BigInt | Last update timestamp |
+| `blockNumber` | BigInt | Last update block |
+| `transactionHash` | Hex | Last update tx hash |

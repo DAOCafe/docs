@@ -1,0 +1,305 @@
+---
+title: Query DAOs
+description: All methods for fetching DAO data from the GraphQL API
+---
+
+# Query DAOs
+
+This page covers all the ways to fetch DAO data from the DAO Café GraphQL API.
+
+**Endpoint:** `https://dao.cafe/graphql`
+
+---
+
+## Get All DAOs
+
+Fetch a paginated list of all DAOs, ordered by creation date.
+
+```graphql
+query GetAllDAOs {
+  daos(limit: 10, orderBy: "createdAt", orderDirection: "desc") {
+    items {
+      id
+      name
+      tokenSymbol
+      proposalCount
+      totalVoters
+      manager
+      chainId
+    }
+  }
+}
+```
+
+### Pagination
+
+Use `limit` and `offset` for pagination:
+
+```graphql
+query GetDAOsPage2 {
+  daos(limit: 10, offset: 10, orderBy: "createdAt", orderDirection: "desc") {
+    items {
+      id
+      name
+    }
+  }
+}
+```
+
+---
+
+## Get DAO by ID
+
+Fetch a single DAO using its composite ID (`chainId_governorAddress`).
+
+```graphql
+query GetDAOById {
+  dao(id: "8453_0x1234567890abcdef1234567890abcdef12345678") {
+    id
+    name
+    governor
+    token
+    timelock
+    tokenName
+    tokenSymbol
+    totalSupply
+    proposalCount
+    totalVoters
+    votingDelay
+    votingPeriod
+    proposalThreshold
+    createdAt
+  }
+}
+```
+
+---
+
+## Get DAOs by Manager Address
+
+Find all DAOs managed by a specific address. Useful for finding DAOs controlled by external systems or specific wallets.
+
+```graphql
+query GetDAOsByManager {
+  daos(where: { manager: "0xYourManagerAddress" }) {
+    items {
+      id
+      name
+      governor
+      token
+      chainId
+    }
+  }
+}
+```
+
+### With Variables
+
+```graphql
+query GetDAOsByManager($managerAddress: String!) {
+  daos(where: { manager: $managerAddress }) {
+    items {
+      id
+      name
+      token
+      governor
+    }
+  }
+}
+```
+
+Variables:
+```json
+{
+  "managerAddress": "0x1234567890abcdef1234567890abcdef12345678"
+}
+```
+
+---
+
+## Get DAO by Token Address
+
+Find a DAO by its governance token contract address.
+
+```graphql
+query GetDAOByToken {
+  daos(where: { token: "0xTokenAddress", chainId: 8453 }) {
+    items {
+      id
+      name
+      governor
+      totalVoters
+      proposalCount
+    }
+  }
+}
+```
+
+### With Variables
+
+```graphql
+query GetDAOByToken($tokenAddress: String!, $chainId: Int!) {
+  daos(where: { token: $tokenAddress, chainId: $chainId }) {
+    items {
+      id
+      name
+      governor
+      totalVoters
+    }
+  }
+}
+```
+
+---
+
+## Get DAO by Governor Address
+
+Find a DAO by its governor contract address.
+
+```graphql
+query GetDAOByGovernor {
+  daos(where: { governor: "0xGovernorAddress", chainId: 8453 }) {
+    items {
+      id
+      name
+      token
+      timelock
+      manager
+    }
+  }
+}
+```
+
+<Note>
+Since the DAO ID is `chainId_governorAddress`, you can also use `dao(id: "chainId_governorAddress")` directly.
+</Note>
+
+---
+
+## Get DAOs by Chain ID
+
+Filter DAOs by network.
+
+### Base Mainnet Only
+
+```graphql
+query GetBaseDAOs {
+  daos(where: { chainId: 8453 }) {
+    items {
+      id
+      name
+      tokenSymbol
+      proposalCount
+    }
+  }
+}
+```
+
+### Sepolia Testnet Only
+
+```graphql
+query GetSepoliaDAOs {
+  daos(where: { chainId: 11155111 }) {
+    items {
+      id
+      name
+      tokenSymbol
+    }
+  }
+}
+```
+
+---
+
+## Get DAO with Related Data
+
+Fetch a DAO along with its proposals, votes, or token holders.
+
+### DAO with Proposals
+
+```graphql
+query GetDAOWithProposals {
+  dao(id: "8453_0xGovernorAddress") {
+    id
+    name
+    proposalCount
+    proposals(limit: 5, orderBy: "createdAt", orderDirection: "desc") {
+      items {
+        id
+        description
+        state
+        votesFor
+        votesAgainst
+        voteStart
+        voteEnd
+      }
+    }
+  }
+}
+```
+
+### DAO with Token Holders
+
+```graphql
+query GetDAOWithHolders {
+  dao(id: "8453_0xGovernorAddress") {
+    id
+    name
+    totalVoters
+    tokenHolders(limit: 10, orderBy: "votes", orderDirection: "desc") {
+      items {
+        holder
+        balance
+        votes
+      }
+    }
+  }
+}
+```
+
+### DAO with Delegates
+
+```graphql
+query GetDAOWithDelegates {
+  dao(id: "8453_0xGovernorAddress") {
+    id
+    name
+    delegates(limit: 10) {
+      items {
+        delegator
+        toDelegate
+        updatedAt
+      }
+    }
+  }
+}
+```
+
+---
+
+## Available DAO Fields Reference
+
+Here's a complete list of fields you can query on a DAO:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID: `chainId_governorAddress` |
+| `chainId` | Int | Network chain ID |
+| `governor` | Address | Governor contract |
+| `token` | Address | Governance token |
+| `timelock` | Address | Timelock controller |
+| `creator` | Address | DAO creator |
+| `name` | String | DAO name |
+| `tokenName` | String | Token name |
+| `tokenSymbol` | String | Token symbol |
+| `totalSupply` | BigInt | Total token supply |
+| `proposalCount` | Int | Total proposals |
+| `totalVoters` | Int | Addresses with votes |
+| `manager` | Address | Manager (optional) |
+| `votingDelay` | BigInt | Delay before voting |
+| `votingPeriod` | BigInt | Voting duration |
+| `proposalThreshold` | BigInt | Tokens to propose |
+| `quorumNumerator` | BigInt | Quorum % numerator |
+| `createdAt` | BigInt | Creation timestamp |
+| `blockNumber` | BigInt | Creation block |
+| `transactionHash` | Hex | Creation tx hash |

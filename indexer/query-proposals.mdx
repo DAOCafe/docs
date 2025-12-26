@@ -1,0 +1,248 @@
+---
+title: Query Proposals
+description: All methods for fetching governance proposals from the GraphQL API
+---
+
+# Query Proposals
+
+This page covers all the ways to fetch proposal data from the DAO Café GraphQL API.
+
+**Endpoint:** `https://dao.cafe/graphql`
+
+---
+
+## Get All Proposals
+
+Fetch all proposals across all DAOs, ordered by creation date.
+
+```graphql
+query GetAllProposals {
+  proposals(limit: 10, orderBy: "createdAt", orderDirection: "desc") {
+    items {
+      id
+      daoId
+      proposer
+      description
+      state
+      votesFor
+      votesAgainst
+      votesAbstain
+      voteStart
+      voteEnd
+    }
+  }
+}
+```
+
+---
+
+## Get Proposals by State
+
+Filter proposals by their current state.
+
+### Active Proposals
+
+```graphql
+query GetActiveProposals {
+  proposals(where: { state: ACTIVE }) {
+    items {
+      id
+      description
+      votesFor
+      votesAgainst
+      voteEnd
+    }
+  }
+}
+```
+
+### Pending Proposals
+
+```graphql
+query GetPendingProposals {
+  proposals(where: { state: PENDING }) {
+    items {
+      id
+      description
+      voteStart
+    }
+  }
+}
+```
+
+### Executed Proposals
+
+```graphql
+query GetExecutedProposals {
+  proposals(where: { state: EXECUTED }) {
+    items {
+      id
+      description
+      votesFor
+      votesAgainst
+    }
+  }
+}
+```
+
+<Note>
+Available states: `PENDING`, `ACTIVE`, `CANCELED`, `DEFEATED`, `SUCCEEDED`, `QUEUED`, `EXPIRED`, `EXECUTED`
+</Note>
+
+---
+
+## Get Proposals by DAO
+
+Fetch all proposals for a specific DAO.
+
+```graphql
+query GetDAOProposals($daoId: String!) {
+  proposals(where: { daoId: $daoId }, orderBy: "createdAt", orderDirection: "desc") {
+    items {
+      id
+      proposer
+      description
+      state
+      votesFor
+      votesAgainst
+      votesAbstain
+      voteStart
+      voteEnd
+    }
+  }
+}
+```
+
+Variables:
+```json
+{
+  "daoId": "8453_0xGovernorAddress"
+}
+```
+
+---
+
+## Get Proposal by ID
+
+Fetch a single proposal with full details.
+
+```graphql
+query GetProposal($id: String!) {
+  proposal(id: $id) {
+    id
+    daoId
+    chainId
+    governor
+    proposalId
+    proposer
+    description
+    targets
+    values
+    calldatas
+    state
+    votesFor
+    votesAgainst
+    votesAbstain
+    voteStart
+    voteEnd
+    eta
+    createdAt
+    blockNumber
+    transactionHash
+  }
+}
+```
+
+---
+
+## Get Proposals by Proposer
+
+Find all proposals created by a specific address.
+
+```graphql
+query GetProposalsByProposer($proposer: String!) {
+  proposals(where: { proposer: $proposer }) {
+    items {
+      id
+      daoId
+      description
+      state
+      createdAt
+    }
+  }
+}
+```
+
+---
+
+## Get Proposal with Votes
+
+Fetch a proposal along with all votes cast.
+
+```graphql
+query GetProposalWithVotes($id: String!) {
+  proposal(id: $id) {
+    id
+    description
+    state
+    votesFor
+    votesAgainst
+    votesAbstain
+    votes(limit: 50, orderBy: "weight", orderDirection: "desc") {
+      items {
+        voter
+        support
+        weight
+        reason
+      }
+    }
+  }
+}
+```
+
+---
+
+## Get Proposals by Chain
+
+Filter proposals by network.
+
+```graphql
+query GetBaseProposals {
+  proposals(where: { chainId: 8453 }, limit: 10) {
+    items {
+      id
+      daoId
+      description
+      state
+    }
+  }
+}
+```
+
+---
+
+## Available Proposal Fields Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID: `chainId_governor_proposalId` |
+| `daoId` | String | Parent DAO ID |
+| `chainId` | Int | Network chain ID |
+| `governor` | Address | Governor contract |
+| `proposalId` | BigInt | On-chain proposal ID |
+| `proposer` | Address | Creator address |
+| `description` | String | Proposal description |
+| `targets` | [String] | Target contract addresses |
+| `values` | [String] | ETH values for calls |
+| `calldatas` | [String] | Encoded function calls |
+| `signatures` | [String] | Function signatures (optional) |
+| `state` | Enum | Current proposal state |
+| `votesFor` | BigInt | Total FOR votes |
+| `votesAgainst` | BigInt | Total AGAINST votes |
+| `votesAbstain` | BigInt | Total ABSTAIN votes |
+| `voteStart` | BigInt | Voting start timestamp |
+| `voteEnd` | BigInt | Voting end timestamp |
+| `eta` | BigInt | Execution time (when queued) |
+| `createdAt` | BigInt | Creation timestamp |
+| `blockNumber` | BigInt | Creation block |
+| `transactionHash` | Hex | Creation tx hash |

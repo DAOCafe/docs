@@ -1,97 +1,46 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: DAO Café Documentation
+description: The official indexer and SDK for the CreateDAO protocol
 ---
 
-## Setting up
+# Welcome to DAO Café
 
-Get your documentation site up and running in minutes.
+DAO Café provides developer tools for the **CreateDAO** protocol — a governance framework built on OpenZeppelin Governor and ERC20Votes.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="DAO Café Indexer" icon="database" href="/indexer/overview">
+    High-performance GraphQL API for querying DAOs, proposals, votes, and delegations in real-time.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Query DAOs" icon="magnifying-glass" href="/indexer/query-daos">
+    Learn all the ways to fetch DAO data from the API.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What is DAO Café?
 
-Everything you need to create world-class documentation.
+DAO Café indexes all governance activity from DAOs created via the CreateDAO factory contracts. It provides:
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+- **Real-time GraphQL API** at `https://dao.cafe/graphql`
+- **Multi-chain support** for Base Mainnet and Sepolia Testnet
+- **Complete governance data**: DAOs, proposals, votes, delegations, and token holders
 
-## Need inspiration?
+## Quick Links
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={3}>
+  <Card title="GraphQL Playground" icon="circle-play" href="https://dao.cafe/graphql">
+    Try queries interactively
+  </Card>
+  <Card title="Indexer Overview" icon="book" href="/indexer/overview">
+    Understand the data model
+  </Card>
+  <Card title="DAO Queries" icon="code" href="/indexer/query-daos">
+    Query examples & reference
+  </Card>
+</CardGroup>
+
+## Supported Networks
+
+| Network | Chain ID | Status |
+|---------|----------|--------|
+| Base Mainnet | 8453 | ✅ Live |
+| Sepolia Testnet | 11155111 | ✅ Live |
