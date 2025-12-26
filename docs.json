@@ -50,6 +50,17 @@
               "indexer/query-votes",
               "indexer/query-delegation"
             ]
+          },
+          {
+            "group": "SDK",
+            "pages": [
+              "sdk/overview",
+              "sdk/react-hooks",
+              "sdk/query-functions",
+              "sdk/types",
+              "sdk/advanced",
+              "sdk/examples"
+            ]
           }
         ]
       }

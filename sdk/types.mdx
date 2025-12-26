@@ -1,0 +1,378 @@
+---
+title: TypeScript Types
+description: Complete reference for all TypeScript types exported by the SDK
+---
+
+# TypeScript Types
+
+The SDK is fully typed. Import types directly:
+
+```ts
+import type { 
+  DAO, 
+  Proposal, 
+  Vote, 
+  ProposalState,
+  PaginatedResponse 
+} from 'daocafe-sdk';
+```
+
+---
+
+## Entity Types
+
+### DAO
+
+Represents a governance organization created through the CreateDAO factory.
+
+```ts
+interface DAO {
+  /** Composite ID: chainId_governorAddress */
+  id: string;
+  chainId: number;
+  governor: string;
+  token: string;
+  timelock: string;
+  creator: string;
+  name: string;
+  tokenName: string;
+  tokenSymbol: string;
+  totalSupply: string;
+  proposalCount: number;
+  /** Manager address (can be updated via governance) */
+  manager: string | null;
+  /** Governance settings */
+  votingDelay: string | null;
+  votingPeriod: string | null;
+  proposalThreshold: string | null;
+  quorumNumerator: string | null;
+  createdAt: string;
+  blockNumber: string;
+  transactionHash: string;
+  /** Optional relations (when requested) */
+  proposals?: Proposal[];
+  votes?: Vote[];
+  delegates?: Delegate[];
+  tokenHolders?: TokenHolder[];
+  settingsChanges?: GovernanceSettingsChange[];
+}
+```
+
+---
+
+### Proposal
+
+Governance proposal with voting data.
+
+```ts
+interface Proposal {
+  /** ID: chainId_governorAddress_proposalId */
+  id: string;
+  daoId: string;
+  chainId: number;
+  governor: string;
+  proposalId: string;
+  proposer: string;
+  /** Proposal content */
+  targets: string[];
+  values: string[];
+  calldatas: string[];
+  signatures: string[] | null;
+  description: string;
+  /** Timing */
+  voteStart: string;
+  voteEnd: string;
+  eta: string | null;
+  /** Vote tallies */
+  votesFor: string;
+  votesAgainst: string;
+  votesAbstain: string;
+  state: ProposalState;
+  createdAt: string;
+  blockNumber: string;
+  transactionHash: string;
+  /** Optional relations */
+  dao?: DAO;
+  votes?: Vote[];
+}
+```
+
+---
+
+### Vote
+
+Individual vote cast on a proposal.
+
+```ts
+interface Vote {
+  /** ID: chainId_governor_proposalId_voter */
+  id: string;
+  proposalId: string;
+  daoId: string;
+  chainId: number;
+  governor: string;
+  voter: string;
+  support: VoteSupport;
+  weight: string;
+  reason: string | null;
+  params: string | null;
+  createdAt: string;
+  blockNumber: string;
+  transactionHash: string;
+  /** Optional relations */
+  proposal?: Proposal;
+  dao?: DAO;
+}
+```
+
+---
+
+### Delegate
+
+Delegation relationship between addresses.
+
+```ts
+interface Delegate {
+  /** ID: chainId_tokenAddress_delegatorAddress */
+  id: string;
+  daoId: string;
+  chainId: number;
+  token: string;
+  delegator: string;
+  toDelegate: string;
+  updatedAt: string;
+  blockNumber: string;
+  transactionHash: string;
+  /** Optional relation */
+  dao?: DAO;
+}
+```
+
+---
+
+### TokenHolder
+
+Token balance and voting power for an address.
+
+```ts
+interface TokenHolder {
+  /** ID: chainId_tokenAddress_holderAddress */
+  id: string;
+  daoId: string;
+  chainId: number;
+  token: string;
+  holder: string;
+  balance: string;
+  votes: string;
+  updatedAt: string;
+  blockNumber: string;
+  /** Optional relation */
+  dao?: DAO;
+}
+```
+
+---
+
+### GovernanceSettingsChange
+
+Audit log entry for governance parameter changes.
+
+```ts
+interface GovernanceSettingsChange {
+  /** ID: chainId_governor_blockNumber_logIndex */
+  id: string;
+  daoId: string;
+  chainId: number;
+  governor: string;
+  setting: SettingType;
+  oldValue: string;
+  newValue: string;
+  createdAt: string;
+  blockNumber: string;
+  transactionHash: string;
+  /** Optional relation */
+  dao?: DAO;
+}
+```
+
+---
+
+## Enum Types
+
+### ProposalState
+
+Matches the OpenZeppelin Governor proposal states.
+
+```ts
+type ProposalState =
+  | 'PENDING'    // 0 - Proposal created, voting not started
+  | 'ACTIVE'     // 1 - Voting in progress
+  | 'CANCELED'   // 2 - Proposal canceled
+  | 'DEFEATED'   // 3 - Voting ended, did not pass
+  | 'SUCCEEDED'  // 4 - Voting ended, passed
+  | 'QUEUED'     // 5 - In timelock queue
+  | 'EXPIRED'    // 6 - Timelock expired
+  | 'EXECUTED';  // 7 - Proposal executed
+```
+
+---
+
+### VoteSupport
+
+Vote support types matching OpenZeppelin Governor.
+
+```ts
+type VoteSupport = 
+  | 'AGAINST'  // 0
+  | 'FOR'      // 1
+  | 'ABSTAIN'; // 2
+```
+
+---
+
+### SettingType
+
+Governance setting types.
+
+```ts
+type SettingType =
+  | 'VOTING_DELAY'
+  | 'VOTING_PERIOD'
+  | 'PROPOSAL_THRESHOLD'
+  | 'QUORUM_NUMERATOR';
+```
+
+---
+
+## Response Types
+
+### PaginatedResponse
+
+Generic wrapper for paginated list queries.
+
+```ts
+interface PaginatedResponse<T> {
+  items: T[];
+  pageInfo: PageInfo;
+}
+```
+
+---
+
+### PageInfo
+
+Cursor-based pagination info.
+
+```ts
+interface PageInfo {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  startCursor: string | null;
+  endCursor: string | null;
+}
+```
+
+---
+
+## Query Parameter Types
+
+### PaginationParams
+
+Base pagination parameters used by all queries.
+
+```ts
+interface PaginationParams {
+  limit?: number;
+  after?: string;
+  before?: string;
+}
+```
+
+---
+
+### DAOQueryParams
+
+```ts
+interface DAOQueryParams extends PaginationParams {
+  orderBy?: 'createdAt' | 'proposalCount' | 'name';
+  orderDirection?: OrderDirection;
+}
+```
+
+---
+
+### ProposalQueryParams
+
+```ts
+interface ProposalQueryParams extends PaginationParams {
+  daoId?: string;
+  state?: ProposalState;
+  proposer?: string;
+  orderBy?: 'createdAt' | 'voteEnd' | 'voteStart';
+  orderDirection?: OrderDirection;
+}
+```
+
+---
+
+### VoteQueryParams
+
+```ts
+interface VoteQueryParams extends PaginationParams {
+  proposalId?: string;
+  daoId?: string;
+  voter?: string;
+  support?: VoteSupport;
+  orderBy?: 'createdAt' | 'weight';
+  orderDirection?: OrderDirection;
+}
+```
+
+---
+
+### DelegateQueryParams
+
+```ts
+interface DelegateQueryParams extends PaginationParams {
+  daoId?: string;
+  delegator?: string;
+  toDelegate?: string;
+  orderBy?: 'updatedAt';
+  orderDirection?: OrderDirection;
+}
+```
+
+---
+
+### TokenHolderQueryParams
+
+```ts
+interface TokenHolderQueryParams extends PaginationParams {
+  daoId?: string;
+  holder?: string;
+  orderBy?: 'balance' | 'votes' | 'updatedAt';
+  orderDirection?: OrderDirection;
+}
+```
+
+---
+
+### OrderDirection
+
+```ts
+type OrderDirection = 'asc' | 'desc';
+```
+
+---
+
+## ID Formats
+
+All entity IDs are composite strings for uniqueness across chains:
+
+| Entity | Format | Example |
+|--------|--------|---------|
+| DAO | `{chainId}_{governorAddress}` | `11155111_0xf51C4b7b5AA34052B9C605A6BAf4DB8E844106B0` |
+| Proposal | `{chainId}_{governor}_{proposalId}` | `11155111_0xf51C4b7b..._12345` |
+| Vote | `{chainId}_{governor}_{proposalId}_{voter}` | `11155111_0xf51C..._12345_0xAbc...` |
+| Delegate | `{chainId}_{tokenAddress}_{delegatorAddress}` | `11155111_0xcfCf..._0xAbc...` |
+| TokenHolder | `{chainId}_{tokenAddress}_{holderAddress}` | `11155111_0xcfCf..._0xAbc...` |

@@ -1,0 +1,139 @@
+---
+title: SDK Overview
+description: TypeScript SDK for DAO.CAFE - the GraphQL indexer for CreateDAO
+---
+
+# daocafe-sdk
+
+The official TypeScript SDK for [DAO.CAFE](https://dao.cafe) - providing type-safe access to governance data from the CreateDAO protocol.
+
+<CardGroup cols={2}>
+  <Card title="React Hooks" icon="react" href="/sdk/react-hooks">
+    TanStack Query integration for seamless data fetching
+  </Card>
+  <Card title="Query Functions" icon="code" href="/sdk/query-functions">
+    Promise-based API for Node.js and vanilla JS
+  </Card>
+  <Card title="TypeScript Types" icon="brackets-curly" href="/sdk/types">
+    Full type definitions for all entities
+  </Card>
+  <Card title="Examples" icon="laptop-code" href="/sdk/examples">
+    Real-world code examples
+  </Card>
+</CardGroup>
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| 🔍 **Type-safe** | Full TypeScript support with generated types |
+| ⚛️ **React Hooks** | TanStack Query integration with caching and refetching |
+| 🚀 **Tree-shakable** | Only bundle what you use |
+| 📦 **Zero Config** | Pre-configured to work with the DAO.CAFE endpoint |
+| 🔄 **Real-time Ready** | Built-in caching and background refetching |
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install daocafe-sdk
+```
+
+```bash yarn
+yarn add daocafe-sdk
+```
+
+```bash pnpm
+pnpm add daocafe-sdk
+```
+
+</CodeGroup>
+
+### Peer Dependencies (for React hooks)
+
+If you plan to use the React hooks, install these peer dependencies:
+
+```bash
+npm install @tanstack/react-query react
+```
+
+## Quick Start
+
+### With React Hooks
+
+```tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useDAOs } from 'daocafe-sdk';
+
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <DAOList />
+    </QueryClientProvider>
+  );
+}
+
+function DAOList() {
+  const { data, isLoading, error } = useDAOs({ limit: 10 });
+
+  if (isLoading) return <div>Loading DAOs...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <ul>
+      {data?.items.map(dao => (
+        <li key={dao.id}>
+          <strong>{dao.name}</strong> - {dao.proposalCount} proposals
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### With Async Functions (Node.js / Vanilla JS)
+
+```ts
+import { getDAOs, getActiveProposals } from 'daocafe-sdk';
+
+// Fetch all DAOs
+const { items: daos } = await getDAOs({ limit: 10 });
+console.log(`Found ${daos.length} DAOs`);
+
+// Fetch active proposals across all DAOs
+const { items: proposals } = await getActiveProposals();
+console.log(`${proposals.length} active proposals`);
+```
+
+## Supported Networks
+
+| Network | Chain ID | Status |
+|---------|----------|--------|
+| Base Mainnet | 8453 | ✅ Supported |
+| Sepolia Testnet | 11155111 | ✅ Supported |
+
+## ID Formats
+
+The SDK uses composite IDs for all entities:
+
+| Entity | ID Format | Example |
+|--------|-----------|---------|
+| DAO | `chainId_governorAddress` | `11155111_0xf51C4b7b...` |
+| Proposal | `chainId_governor_proposalId` | `11155111_0xf51C4b7b..._12345` |
+| Vote | `chainId_governor_proposalId_voter` | `11155111_0xf51C...._12345_0xAbc...` |
+| Delegate | `chainId_tokenAddress_delegatorAddress` | `11155111_0xcfCf..._0xAbc...` |
+| TokenHolder | `chainId_tokenAddress_holderAddress` | `11155111_0xcfCf..._0xAbc...` |
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="React Hooks" icon="react" href="/sdk/react-hooks">
+    Deep dive into all available React hooks
+  </Card>
+  <Card title="Real-World Examples" icon="laptop-code" href="/sdk/examples">
+    Build a DAO dashboard from scratch
+  </Card>
+</CardGroup>

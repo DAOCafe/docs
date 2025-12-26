@@ -1,0 +1,337 @@
+---
+title: Advanced Usage
+description: Custom clients, caching, error handling, and optimization tips
+---
+
+# Advanced Usage
+
+This guide covers advanced SDK features for power users.
+
+## Custom GraphQL Client
+
+The SDK comes pre-configured to use `https://dao.cafe/graphql`, but you can create custom clients for different scenarios.
+
+### Creating a Custom Client
+
+```ts
+import { createClient, getDAOs } from 'daocafe-sdk';
+
+// Create client with custom endpoint
+const client = createClient('https://your-indexer.com/graphql');
+
+// Use it with any query function
+const { items } = await getDAOs({ limit: 10 }, client);
+```
+
+### Adding Request Headers
+
+```ts
+import { createClient } from 'daocafe-sdk';
+
+// Create client with authorization headers
+const client = createClient('https://dao.cafe/graphql', {
+  headers: {
+    'Authorization': 'Bearer your-api-key',
+    'X-Request-ID': 'unique-request-id'
+  }
+});
+```
+
+### Modifying Default Client Headers
+
+If you want to add headers to all requests globally:
+
+```ts
+import { setClientHeaders } from 'daocafe-sdk';
+
+// Set headers on the default client
+setClientHeaders({
+  'Authorization': 'Bearer token',
+  'X-Custom-Header': 'value'
+});
+```
+
+### Accessing the Default Client
+
+```ts
+import { daoCafeClient, DEFAULT_ENDPOINT } from 'daocafe-sdk';
+
+console.log(DEFAULT_ENDPOINT); // 'https://dao.cafe/graphql'
+
+// Use the default client directly if needed
+const result = await daoCafeClient.request(/* custom query */);
+```
+
+---
+
+## Cache Invalidation
+
+When using React hooks with TanStack Query, you can invalidate cached data to trigger refetches.
+
+### Basic Invalidation
+
+```tsx
+import { useQueryClient } from '@tanstack/react-query';
+import { daoKeys, proposalKeys } from 'daocafe-sdk';
+
+function RefreshButton() {
+  const queryClient = useQueryClient();
+
+  const refreshAllDAOs = () => {
+    queryClient.invalidateQueries({ queryKey: daoKeys.all });
+  };
+
+  return <button onClick={refreshAllDAOs}>Refresh</button>;
+}
+```
+
+### Targeted Invalidation
+
+Invalidate only specific queries for better performance:
+
+```tsx
+import { useQueryClient } from '@tanstack/react-query';
+import { proposalKeys, voteKeys } from 'daocafe-sdk';
+
+function useRefreshProposal(proposalId: string) {
+  const queryClient = useQueryClient();
+
+  const refresh = () => {
+    // Invalidate the specific proposal
+    queryClient.invalidateQueries({ 
+      queryKey: proposalKeys.detail(proposalId) 
+    });
+    
+    // Also invalidate votes for this proposal
+    queryClient.invalidateQueries({ 
+      queryKey: voteKeys.byProposal(proposalId) 
+    });
+  };
+
+  return refresh;
+}
+```
+
+### Query Key Reference
+
+| Export | Available Keys |
+|--------|----------------|
+| `daoKeys` | `.all`, `.lists()`, `.list(params)`, `.byManager(params)`, `.details()`, `.detail(id)` |
+| `proposalKeys` | `.all`, `.lists()`, `.list(params)`, `.byDAO(daoId)`, `.active(params)`, `.details()`, `.detail(id)` |
+| `voteKeys` | `.all`, `.lists()`, `.list(params)`, `.byProposal(id)`, `.byVoter(voter)`, `.details()`, `.detail(id)` |
+| `delegateKeys` | `.all`, `.lists()`, `.byDAO(daoId)`, `.delegationsFrom(addr)`, `.delegationsTo(addr)`, `.details()`, `.detail(id)` |
+| `tokenHolderKeys` | `.all`, `.lists()`, `.byDAO(daoId)`, `.byAddress(addr)`, `.details()`, `.detail(id)` |
+
+---
+
+## Error Handling
+
+### With React Hooks
+
+TanStack Query provides built-in error handling:
+
+```tsx
+import { useDAOs } from 'daocafe-sdk';
+
+function DAOList() {
+  const { data, isLoading, error, isError, refetch } = useDAOs({ limit: 10 });
+
+  if (isLoading) return <div>Loading...</div>;
+
+  if (isError) {
+    return (
+      <div>
+        <p>Error: {error.message}</p>
+        <button onClick={() => refetch()}>Retry</button>
+      </div>
+    );
+  }
+
+  return <ul>{data?.items.map(/* ... */)}</ul>;
+}
+```
+
+### With Query Functions
+
+Use try/catch for promise-based functions:
+
+```ts
+import { getDAOs } from 'daocafe-sdk';
+
+async function fetchDAOs() {
+  try {
+    const { items } = await getDAOs({ limit: 10 });
+    return items;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Failed to fetch DAOs:', error.message);
+    }
+    throw error;
+  }
+}
+```
+
+### Common Error Types
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| Network Error | No internet / API unreachable | Check connection, retry |
+| GraphQL Error | Invalid query parameters | Check parameter types |
+| Rate Limit | Too many requests | Add retry with backoff |
+
+---
+
+## Retry Configuration
+
+Configure TanStack Query's retry behavior:
+
+```tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 1000 * 60, // 1 minute
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <YourApp />
+    </QueryClientProvider>
+  );
+}
+```
+
+---
+
+## Tree-Shaking
+
+The SDK is designed for optimal bundle sizes. Only import what you need:
+
+```ts
+// ✅ Good - only imports DAO functions
+import { useDAOs, useDAO } from 'daocafe-sdk';
+
+// ✅ Good - type-only imports don't add bundle size
+import type { DAO, Proposal } from 'daocafe-sdk';
+```
+
+### Bundle Size Tips
+
+1. **Import specific hooks** instead of entire modules
+2. **Use `type` imports** for TypeScript types
+3. **React hooks are optional** - if you don't import them, they're not bundled
+
+---
+
+## Pagination
+
+All list queries support cursor-based pagination:
+
+```tsx
+import { useState } from 'react';
+import { useDAOs } from 'daocafe-sdk';
+
+function PaginatedDAOs() {
+  const [cursor, setCursor] = useState<string | undefined>();
+  
+  const { data, isLoading } = useDAOs({ 
+    limit: 10, 
+    after: cursor 
+  });
+
+  const loadMore = () => {
+    if (data?.pageInfo.hasNextPage) {
+      setCursor(data.pageInfo.endCursor ?? undefined);
+    }
+  };
+
+  return (
+    <div>
+      <ul>
+        {data?.items.map(dao => (
+          <li key={dao.id}>{dao.name}</li>
+        ))}
+      </ul>
+      
+      {data?.pageInfo.hasNextPage && (
+        <button onClick={loadMore} disabled={isLoading}>
+          Load More
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+### Infinite Scroll with TanStack Query
+
+```tsx
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { getDAOs, daoKeys } from 'daocafe-sdk';
+
+function InfiniteDAOs() {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: daoKeys.lists(),
+    queryFn: ({ pageParam }) => getDAOs({ limit: 10, after: pageParam }),
+    getNextPageParam: (lastPage) => 
+      lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
+    initialPageParam: undefined as string | undefined,
+  });
+
+  const allDAOs = data?.pages.flatMap(page => page.items) ?? [];
+
+  return (
+    <div>
+      {allDAOs.map(dao => (
+        <div key={dao.id}>{dao.name}</div>
+      ))}
+      
+      <button
+        onClick={() => fetchNextPage()}
+        disabled={!hasNextPage || isFetchingNextPage}
+      >
+        {isFetchingNextPage ? 'Loading...' : 'Load More'}
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
+## Server-Side Rendering
+
+For Next.js or other SSR frameworks, prefetch data on the server:
+
+```tsx
+// Next.js App Router example
+import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { getDAOs, daoKeys } from 'daocafe-sdk';
+
+export default async function DAOsPage() {
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: daoKeys.list({ limit: 10 }),
+    queryFn: () => getDAOs({ limit: 10 }),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <DAOList />
+    </HydrationBoundary>
+  );
+}
+```

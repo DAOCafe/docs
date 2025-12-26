@@ -1,0 +1,557 @@
+---
+title: React Hooks
+description: TanStack Query hooks for fetching governance data in React applications
+---
+
+# React Hooks
+
+The SDK provides React hooks built on [TanStack Query](https://tanstack.com/query) for seamless data fetching with caching, background updates, and error handling.
+
+## Setup
+
+Wrap your app with `QueryClientProvider`:
+
+```tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <YourApp />
+    </QueryClientProvider>
+  );
+}
+```
+
+---
+
+## DAO Hooks
+
+### useDAOs
+
+Fetch all DAOs with pagination and ordering.
+
+```tsx
+import { useDAOs } from 'daocafe-sdk';
+
+function DAOList() {
+  const { data, isLoading, error } = useDAOs({
+    limit: 10,
+    orderBy: 'proposalCount',
+    orderDirection: 'desc'
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <ul>
+      {data?.items.map(dao => (
+        <li key={dao.id}>
+          {dao.name} ({dao.proposalCount} proposals)
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+<Accordion title="Parameters">
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `limit` | `number` | Max items to return |
+| `after` | `string` | Cursor for forward pagination |
+| `before` | `string` | Cursor for backward pagination |
+| `orderBy` | `'createdAt' \| 'proposalCount' \| 'name'` | Sort field |
+| `orderDirection` | `'asc' \| 'desc'` | Sort direction |
+</Accordion>
+
+<Accordion title="Response Schema">
+```ts
+{
+  items: DAO[];
+  pageInfo: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    startCursor: string | null;
+    endCursor: string | null;
+  }
+}
+```
+</Accordion>
+
+---
+
+### useDAO
+
+Fetch a single DAO by ID.
+
+```tsx
+import { useDAO } from 'daocafe-sdk';
+
+function DAODetail({ daoId }: { daoId: string }) {
+  const { data: dao, isLoading } = useDAO(daoId);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!dao) return <div>DAO not found</div>;
+
+  return (
+    <div>
+      <h1>{dao.name}</h1>
+      <p>Token: {dao.tokenSymbol}</p>
+      <p>Proposals: {dao.proposalCount}</p>
+      <p>Voting Period: {dao.votingPeriod} blocks</p>
+    </div>
+  );
+}
+```
+
+<Accordion title="Response Schema">
+```ts
+DAO | null
+```
+See [Types Reference](/sdk/types#dao) for full `DAO` type.
+</Accordion>
+
+---
+
+### useDAOsByManager
+
+Fetch DAOs managed by a specific address.
+
+```tsx
+import { useDAOsByManager } from 'daocafe-sdk';
+
+function ManagedDAOs({ manager }: { manager: string }) {
+  const { data } = useDAOsByManager({ manager, limit: 10 });
+
+  return (
+    <div>
+      <h2>DAOs Managed by {manager.slice(0, 8)}...</h2>
+      {data?.items.map(dao => (
+        <div key={dao.id}>{dao.name}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+## Proposal Hooks
+
+### useProposals
+
+Fetch proposals with optional filters.
+
+```tsx
+import { useProposals } from 'daocafe-sdk';
+
+function ProposalList() {
+  const { data } = useProposals({
+    limit: 20,
+    state: 'ACTIVE',
+    orderBy: 'voteEnd',
+    orderDirection: 'asc'
+  });
+
+  return (
+    <ul>
+      {data?.items.map(proposal => (
+        <li key={proposal.id}>
+          {proposal.description.slice(0, 100)}...
+          <span>State: {proposal.state}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+<Accordion title="Parameters">
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `limit` | `number` | Max items to return |
+| `daoId` | `string` | Filter by DAO ID |
+| `state` | `ProposalState` | Filter by proposal state |
+| `proposer` | `string` | Filter by proposer address |
+| `orderBy` | `'createdAt' \| 'voteEnd' \| 'voteStart'` | Sort field |
+| `orderDirection` | `'asc' \| 'desc'` | Sort direction |
+</Accordion>
+
+---
+
+### useProposal
+
+Fetch a single proposal by ID.
+
+```tsx
+import { useProposal } from 'daocafe-sdk';
+
+function ProposalDetail({ proposalId }: { proposalId: string }) {
+  const { data: proposal } = useProposal(proposalId);
+
+  if (!proposal) return null;
+
+  return (
+    <div>
+      <h2>{proposal.description}</h2>
+      <div>
+        <span>For: {proposal.votesFor}</span>
+        <span>Against: {proposal.votesAgainst}</span>
+        <span>Abstain: {proposal.votesAbstain}</span>
+      </div>
+      <p>State: {proposal.state}</p>
+    </div>
+  );
+}
+```
+
+---
+
+### useProposalsByDAO
+
+Fetch proposals for a specific DAO.
+
+```tsx
+import { useProposalsByDAO } from 'daocafe-sdk';
+
+function DAOProposals({ daoId }: { daoId: string }) {
+  const { data } = useProposalsByDAO(daoId, { limit: 10 });
+
+  return (
+    <ul>
+      {data?.items.map(p => (
+        <li key={p.id}>{p.description}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+---
+
+### useActiveProposals
+
+Fetch all currently active proposals across all DAOs.
+
+```tsx
+import { useActiveProposals } from 'daocafe-sdk';
+
+function ActiveVotes() {
+  const { data, isLoading } = useActiveProposals({ limit: 10 });
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h2>🗳️ Active Proposals ({data?.items.length})</h2>
+      {data?.items.map(proposal => (
+        <div key={proposal.id}>
+          <p>{proposal.description}</p>
+          <small>Ends: {new Date(Number(proposal.voteEnd) * 1000).toLocaleString()}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+## Vote Hooks
+
+### useVotes
+
+Fetch votes with optional filters.
+
+```tsx
+import { useVotes } from 'daocafe-sdk';
+
+function VoteList() {
+  const { data } = useVotes({
+    limit: 50,
+    support: 'FOR',
+    orderBy: 'weight',
+    orderDirection: 'desc'
+  });
+
+  return (
+    <ul>
+      {data?.items.map(vote => (
+        <li key={vote.id}>
+          {vote.voter.slice(0, 8)}... voted {vote.support} with {vote.weight} votes
+          {vote.reason && <p>Reason: {vote.reason}</p>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+<Accordion title="Parameters">
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `proposalId` | `string` | Filter by proposal ID |
+| `daoId` | `string` | Filter by DAO ID |
+| `voter` | `string` | Filter by voter address |
+| `support` | `'FOR' \| 'AGAINST' \| 'ABSTAIN'` | Filter by vote type |
+| `orderBy` | `'createdAt' \| 'weight'` | Sort field |
+</Accordion>
+
+---
+
+### useVotesByProposal
+
+Fetch all votes for a specific proposal.
+
+```tsx
+import { useVotesByProposal } from 'daocafe-sdk';
+
+function ProposalVotes({ proposalId }: { proposalId: string }) {
+  const { data } = useVotesByProposal(proposalId);
+
+  return (
+    <div>
+      <h3>Votes</h3>
+      {data?.items.map(vote => (
+        <div key={vote.id}>
+          <span>{vote.voter}</span>
+          <span>{vote.support}</span>
+          <span>{vote.weight}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+### useVotesByVoter
+
+Fetch all votes cast by a specific address.
+
+```tsx
+import { useVotesByVoter } from 'daocafe-sdk';
+
+function VoterHistory({ voter }: { voter: string }) {
+  const { data } = useVotesByVoter(voter, { limit: 20 });
+
+  return (
+    <div>
+      <h3>Voting History for {voter.slice(0, 8)}...</h3>
+      {data?.items.map(vote => (
+        <div key={vote.id}>
+          Proposal: {vote.proposalId} - {vote.support}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+## Delegate Hooks
+
+### useDelegates
+
+Fetch delegation records with optional filters.
+
+```tsx
+import { useDelegates } from 'daocafe-sdk';
+
+function DelegateList() {
+  const { data } = useDelegates({ limit: 50 });
+
+  return (
+    <ul>
+      {data?.items.map(d => (
+        <li key={d.id}>
+          {d.delegator} → {d.toDelegate}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+---
+
+### useDelegatesByDAO
+
+Fetch delegates for a specific DAO.
+
+```tsx
+import { useDelegatesByDAO } from 'daocafe-sdk';
+
+function DAODelegates({ daoId }: { daoId: string }) {
+  const { data } = useDelegatesByDAO(daoId);
+
+  return (
+    <div>
+      <h3>Delegations</h3>
+      {data?.items.map(d => (
+        <div key={d.id}>
+          {d.delegator.slice(0, 8)}... delegates to {d.toDelegate.slice(0, 8)}...
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+### useDelegationsFrom / useDelegationsTo
+
+Fetch delegations from or to a specific address.
+
+```tsx
+import { useDelegationsFrom, useDelegationsTo } from 'daocafe-sdk';
+
+function DelegationInfo({ address }: { address: string }) {
+  const { data: delegatedTo } = useDelegationsFrom(address);
+  const { data: receivedFrom } = useDelegationsTo(address);
+
+  return (
+    <div>
+      <p>Delegating to: {delegatedTo?.items.length} addresses</p>
+      <p>Receiving from: {receivedFrom?.items.length} addresses</p>
+    </div>
+  );
+}
+```
+
+---
+
+## Token Holder Hooks
+
+### useTokenHolders
+
+Fetch token holders with optional filters.
+
+```tsx
+import { useTokenHolders } from 'daocafe-sdk';
+
+function TopHolders() {
+  const { data } = useTokenHolders({
+    limit: 10,
+    orderBy: 'votes',
+    orderDirection: 'desc'
+  });
+
+  return (
+    <ol>
+      {data?.items.map(h => (
+        <li key={h.id}>
+          {h.holder.slice(0, 8)}... - {h.votes} votes
+        </li>
+      ))}
+    </ol>
+  );
+}
+```
+
+---
+
+### useTokenHoldersByDAO
+
+Fetch token holders for a specific DAO.
+
+```tsx
+import { useTokenHoldersByDAO } from 'daocafe-sdk';
+
+function DAOHolders({ daoId }: { daoId: string }) {
+  const { data } = useTokenHoldersByDAO(daoId, {
+    orderBy: 'balance',
+    orderDirection: 'desc',
+    limit: 20
+  });
+
+  return (
+    <div>
+      <h3>Token Holders</h3>
+      {data?.items.map(h => (
+        <div key={h.id}>
+          {h.holder}: {h.balance} tokens, {h.votes} votes
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+### useTokenHoldingsByAddress
+
+Fetch all token holdings for a specific address across all DAOs.
+
+```tsx
+import { useTokenHoldingsByAddress } from 'daocafe-sdk';
+
+function MyVotingPower({ address }: { address: string }) {
+  const { data } = useTokenHoldingsByAddress(address);
+
+  return (
+    <div>
+      <h3>Your Voting Power</h3>
+      {data?.items.map(h => (
+        <div key={h.id}>
+          <p>DAO: {h.daoId}</p>
+          <p>Balance: {h.balance}</p>
+          <p>Votes: {h.votes}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+## Query Keys
+
+Each hook exports query keys for cache invalidation with TanStack Query:
+
+```tsx
+import { useQueryClient } from '@tanstack/react-query';
+import { daoKeys, proposalKeys, voteKeys, delegateKeys, tokenHolderKeys } from 'daocafe-sdk';
+
+function RefreshButton({ daoId }: { daoId: string }) {
+  const queryClient = useQueryClient();
+
+  const refreshDAO = () => {
+    // Invalidate all DAO queries
+    queryClient.invalidateQueries({ queryKey: daoKeys.all });
+  };
+
+  const refreshProposals = () => {
+    // Invalidate proposals for a specific DAO
+    queryClient.invalidateQueries({ 
+      queryKey: proposalKeys.byDAO(daoId) 
+    });
+  };
+
+  return (
+    <div>
+      <button onClick={refreshDAO}>Refresh All DAOs</button>
+      <button onClick={refreshProposals}>Refresh Proposals</button>
+    </div>
+  );
+}
+```
+
+### Available Query Keys
+
+| Export | Keys |
+|--------|------|
+| `daoKeys` | `.all`, `.lists()`, `.list(params)`, `.byManager(params)`, `.details()`, `.detail(id)` |
+| `proposalKeys` | `.all`, `.lists()`, `.list(params)`, `.byDAO(daoId)`, `.active(params)`, `.details()`, `.detail(id)` |
+| `voteKeys` | `.all`, `.lists()`, `.list(params)`, `.byProposal(id)`, `.byVoter(voter)`, `.details()`, `.detail(id)` |
+| `delegateKeys` | `.all`, `.lists()`, `.byDAO(daoId)`, `.delegationsFrom(addr)`, `.delegationsTo(addr)`, `.details()`, `.detail(id)` |
+| `tokenHolderKeys` | `.all`, `.lists()`, `.byDAO(daoId)`, `.byAddress(addr)`, `.details()`, `.detail(id)` |

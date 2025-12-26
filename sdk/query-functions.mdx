@@ -1,0 +1,363 @@
+---
+title: Query Functions
+description: Promise-based async functions for Node.js and vanilla JavaScript
+---
+
+# Query Functions
+
+All React hooks have corresponding async query functions for use in Node.js, server-side rendering, or vanilla JavaScript applications.
+
+## Overview
+
+Query functions return Promises and can be used anywhere JavaScript runs:
+
+```ts
+import { getDAOs, getProposals, getVotes } from 'daocafe-sdk';
+
+// Fetch data with async/await
+const { items: daos } = await getDAOs({ limit: 10 });
+const { items: proposals } = await getProposals({ state: 'ACTIVE' });
+```
+
+---
+
+## DAO Functions
+
+### getDAOs
+
+Fetch all DAOs with optional pagination and ordering.
+
+```ts
+import { getDAOs } from 'daocafe-sdk';
+
+const { items, pageInfo } = await getDAOs({
+  limit: 10,
+  orderBy: 'proposalCount',
+  orderDirection: 'desc'
+});
+
+console.log(`Found ${items.length} DAOs`);
+items.forEach(dao => {
+  console.log(`${dao.name}: ${dao.proposalCount} proposals`);
+});
+```
+
+<Accordion title="Parameters">
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | `number` | - | Max items to return |
+| `after` | `string` | - | Cursor for forward pagination |
+| `before` | `string` | - | Cursor for backward pagination |
+| `orderBy` | `string` | `'createdAt'` | Sort field |
+| `orderDirection` | `string` | `'desc'` | Sort direction |
+</Accordion>
+
+---
+
+### getDAO
+
+Fetch a single DAO by ID.
+
+```ts
+import { getDAO } from 'daocafe-sdk';
+
+// ID format: chainId_governorAddress
+const daoId = '11155111_0xf51C4b7b5AA34052B9C605A6BAf4DB8E844106B0';
+const dao = await getDAO(daoId);
+
+if (dao) {
+  console.log(`DAO: ${dao.name}`);
+  console.log(`Token: ${dao.tokenSymbol}`);
+  console.log(`Voting Period: ${dao.votingPeriod} blocks`);
+}
+```
+
+---
+
+### getDAOsByManager
+
+Fetch DAOs managed by a specific address.
+
+```ts
+import { getDAOsByManager } from 'daocafe-sdk';
+
+const managerAddress = '0x1234...';
+const { items } = await getDAOsByManager({ 
+  manager: managerAddress,
+  limit: 10 
+});
+
+console.log(`Managing ${items.length} DAOs`);
+```
+
+---
+
+## Proposal Functions
+
+### getProposals
+
+Fetch proposals with optional filters.
+
+```ts
+import { getProposals } from 'daocafe-sdk';
+
+// Get all active proposals
+const { items } = await getProposals({
+  state: 'ACTIVE',
+  limit: 20,
+  orderBy: 'voteEnd',
+  orderDirection: 'asc'
+});
+
+items.forEach(proposal => {
+  console.log(`Proposal: ${proposal.description.slice(0, 50)}...`);
+  console.log(`Votes: For ${proposal.votesFor} / Against ${proposal.votesAgainst}`);
+});
+```
+
+---
+
+### getProposal
+
+Fetch a single proposal by ID.
+
+```ts
+import { getProposal } from 'daocafe-sdk';
+
+// ID format: chainId_governor_proposalId
+const proposalId = '11155111_0xf51C4b7b..._123456';
+const proposal = await getProposal(proposalId);
+
+if (proposal) {
+  console.log(`State: ${proposal.state}`);
+  console.log(`For: ${proposal.votesFor}`);
+  console.log(`Against: ${proposal.votesAgainst}`);
+}
+```
+
+---
+
+### getProposalsByDAO
+
+Fetch proposals for a specific DAO.
+
+```ts
+import { getProposalsByDAO } from 'daocafe-sdk';
+
+const daoId = '11155111_0xf51C4b7b5AA34052B9C605A6BAf4DB8E844106B0';
+const { items } = await getProposalsByDAO(daoId, { limit: 10 });
+
+console.log(`${items.length} proposals for this DAO`);
+```
+
+---
+
+### getActiveProposals
+
+Fetch all currently active proposals across all DAOs.
+
+```ts
+import { getActiveProposals } from 'daocafe-sdk';
+
+const { items } = await getActiveProposals({ limit: 10 });
+
+console.log(`${items.length} proposals need your vote!`);
+items.forEach(p => {
+  const endDate = new Date(Number(p.voteEnd) * 1000);
+  console.log(`"${p.description.slice(0, 30)}..." ends ${endDate.toLocaleDateString()}`);
+});
+```
+
+---
+
+## Vote Functions
+
+### getVotes
+
+Fetch votes with optional filters.
+
+```ts
+import { getVotes } from 'daocafe-sdk';
+
+const { items } = await getVotes({
+  support: 'FOR',
+  orderBy: 'weight',
+  orderDirection: 'desc',
+  limit: 50
+});
+
+console.log('Top FOR votes by weight:');
+items.forEach(vote => {
+  console.log(`${vote.voter}: ${vote.weight} votes`);
+});
+```
+
+---
+
+### getVotesByProposal
+
+Fetch all votes for a specific proposal.
+
+```ts
+import { getVotesByProposal } from 'daocafe-sdk';
+
+const proposalId = '11155111_0xf51C4b7b..._123456';
+const { items: votes } = await getVotesByProposal(proposalId);
+
+const forVotes = votes.filter(v => v.support === 'FOR');
+const againstVotes = votes.filter(v => v.support === 'AGAINST');
+
+console.log(`${forVotes.length} for, ${againstVotes.length} against`);
+```
+
+---
+
+### getVotesByVoter
+
+Fetch all votes cast by a specific address.
+
+```ts
+import { getVotesByVoter } from 'daocafe-sdk';
+
+const voterAddress = '0xAbc...';
+const { items } = await getVotesByVoter(voterAddress, { limit: 20 });
+
+console.log(`${items.length} votes cast`);
+items.forEach(vote => {
+  console.log(`${vote.proposalId}: ${vote.support}`);
+});
+```
+
+---
+
+## Delegate Functions
+
+### getDelegates
+
+Fetch delegation records.
+
+```ts
+import { getDelegates } from 'daocafe-sdk';
+
+const { items } = await getDelegates({ limit: 100 });
+
+console.log(`${items.length} delegation records`);
+```
+
+---
+
+### getDelegatesByDAO
+
+Fetch delegates for a specific DAO.
+
+```ts
+import { getDelegatesByDAO } from 'daocafe-sdk';
+
+const daoId = '11155111_0xf51C4b7b5AA34052B9C605A6BAf4DB8E844106B0';
+const { items } = await getDelegatesByDAO(daoId);
+
+console.log(`${items.length} delegations in this DAO`);
+```
+
+---
+
+### getDelegationsFrom / getDelegationsTo
+
+Fetch delegations from or to a specific address.
+
+```ts
+import { getDelegationsFrom, getDelegationsTo } from 'daocafe-sdk';
+
+const address = '0xAbc...';
+
+// Who has this address delegated to?
+const { items: outgoing } = await getDelegationsFrom(address);
+console.log(`Delegating to ${outgoing.length} addresses`);
+
+// Who has delegated to this address?
+const { items: incoming } = await getDelegationsTo(address);
+console.log(`Receiving delegation from ${incoming.length} addresses`);
+```
+
+---
+
+## Token Holder Functions
+
+### getTokenHolders
+
+Fetch token holders.
+
+```ts
+import { getTokenHolders } from 'daocafe-sdk';
+
+const { items } = await getTokenHolders({
+  orderBy: 'votes',
+  orderDirection: 'desc',
+  limit: 10
+});
+
+console.log('Top 10 by voting power:');
+items.forEach((h, i) => {
+  console.log(`${i + 1}. ${h.holder}: ${h.votes} votes`);
+});
+```
+
+---
+
+### getTokenHoldersByDAO
+
+Fetch holders for a specific DAO.
+
+```ts
+import { getTokenHoldersByDAO } from 'daocafe-sdk';
+
+const daoId = '11155111_0xf51C4b7b5AA34052B9C605A6BAf4DB8E844106B0';
+const { items } = await getTokenHoldersByDAO(daoId, {
+  orderBy: 'balance',
+  orderDirection: 'desc',
+  limit: 20
+});
+
+console.log(`Top ${items.length} token holders`);
+```
+
+---
+
+### getTokenHoldingsByAddress
+
+Fetch all holdings for an address across all DAOs.
+
+```ts
+import { getTokenHoldingsByAddress } from 'daocafe-sdk';
+
+const address = '0xAbc...';
+const { items } = await getTokenHoldingsByAddress(address);
+
+console.log(`Holdings in ${items.length} DAOs:`);
+items.forEach(h => {
+  console.log(`DAO ${h.daoId}: ${h.balance} tokens, ${h.votes} votes`);
+});
+```
+
+---
+
+## Custom Client
+
+All functions accept an optional custom GraphQL client as the last parameter:
+
+```ts
+import { createClient, getDAOs } from 'daocafe-sdk';
+
+// Create client with custom headers
+const client = createClient('https://dao.cafe/graphql', {
+  headers: {
+    'Authorization': 'Bearer your-token',
+    'X-Custom-Header': 'value'
+  }
+});
+
+// Use custom client
+const { items } = await getDAOs({ limit: 10 }, client);
+```
+
+See the [Advanced Guide](/sdk/advanced) for more details on custom clients.
