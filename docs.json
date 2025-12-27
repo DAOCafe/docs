@@ -48,7 +48,8 @@
               "indexer/query-daos",
               "indexer/query-proposals",
               "indexer/query-votes",
-              "indexer/query-delegation"
+              "indexer/query-delegation",
+              "indexer/query-token-holders"
             ]
           },
           {

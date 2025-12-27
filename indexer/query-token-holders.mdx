@@ -1,0 +1,208 @@
+---
+title: Query Token Holders
+description: Methods for fetching token balances and voting power
+---
+
+# Query Token Holders
+
+This page covers how to fetch token holder data from the DAO Café GraphQL API.
+
+**Endpoint:** `https://dao.cafe/graphql`
+
+---
+
+## Understanding Token Holders
+
+Token holders are addresses that hold governance tokens. Each holder record tracks:
+- **Balance**: The actual token balance (tokens owned)
+- **Votes**: The voting power (may differ from balance due to delegation)
+
+<Note>
+An address can have `votes > balance` if they've received delegations, or `votes < balance` if they've delegated to someone else.
+</Note>
+
+---
+
+## Get Token Holders by DAO
+
+Fetch all token holders in a DAO, ordered by voting power.
+
+```graphql
+query GetDAOTokenHolders($daoId: String!) {
+  tokenHolders(
+    where: { daoId: $daoId }
+    orderBy: "votes"
+    orderDirection: "desc"
+    limit: 100
+  ) {
+    items {
+      holder
+      balance
+      votes
+      updatedAt
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "daoId": "8453_0xd6d4933c668b2070b3bd44f7420224fcbdb87378"
+}
+```
+
+---
+
+## Get Top Token Holders
+
+Find the addresses with the highest token balances.
+
+```graphql
+query GetTopTokenHolders($daoId: String!) {
+  tokenHolders(
+    where: { daoId: $daoId }
+    orderBy: "balance"
+    orderDirection: "desc"
+    limit: 20
+  ) {
+    items {
+      holder
+      balance
+      votes
+    }
+  }
+}
+```
+
+---
+
+## Get Token Holder by Address
+
+Find a specific holder's token balance and voting power in a DAO.
+
+```graphql
+query GetTokenHolder($id: String!) {
+  tokenHolder(id: $id) {
+    holder
+    balance
+    votes
+    token
+    updatedAt
+    blockNumber
+  }
+}
+```
+
+<Note>
+The holder ID format is: `chainId_tokenAddress_holderAddress` (all lowercase).
+Example: `8453_0xb67b87d2f26928784f51a0e263a0f7a9a5efd833_0x983332bb0b689ed97907f658525d19f4d876d96c`
+</Note>
+
+---
+
+## Get Holdings by Address
+
+Find all token holdings for a specific address across all DAOs.
+
+```graphql
+query GetHoldingsByAddress($holder: String!) {
+  tokenHolders(where: { holder: $holder }) {
+    items {
+      daoId
+      token
+      balance
+      votes
+      dao {
+        name
+        tokenSymbol
+        chainId
+      }
+    }
+  }
+}
+```
+
+This is useful for building portfolio views showing all DAO holdings for a wallet.
+
+---
+
+## Get Holders with Delegations
+
+Find holders who have received delegations (votes > balance).
+
+```graphql
+query GetDelegateHolders($daoId: String!) {
+  tokenHolders(
+    where: { daoId: $daoId }
+    orderBy: "votes"
+    orderDirection: "desc"
+    limit: 50
+  ) {
+    items {
+      holder
+      balance
+      votes
+    }
+  }
+}
+```
+
+<Tip>
+Filter results where `votes > balance` to identify addresses that have received voting power through delegation.
+</Tip>
+
+---
+
+## Token Holder Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Composite ID: `chainId_token_holder` |
+| `daoId` | String | Reference to DAO (`chainId_governor`) |
+| `chainId` | Int | Network chain ID (8453 for Base, 11155111 for Sepolia) |
+| `token` | Address | Governance token contract address |
+| `holder` | Address | Token holder address |
+| `balance` | BigInt | Token balance (in wei) |
+| `votes` | BigInt | Voting power (in wei) |
+| `updatedAt` | BigInt | Last update timestamp |
+| `blockNumber` | BigInt | Last update block number |
+
+---
+
+## Example Response
+
+```json
+{
+  "data": {
+    "tokenHolders": {
+      "items": [
+        {
+          "id": "8453_0xb67b87..._0x11e97f37...",
+          "holder": "0x11e97f37b15c54b7400ee647ab7795334bd518ce",
+          "balance": "990000000000000000000000",
+          "votes": "990000000000000000000000"
+        },
+        {
+          "id": "8453_0xb67b87..._0x983332bb...",
+          "holder": "0x983332bb0b689ed97907f658525d19f4d876d96c",
+          "balance": "10000000000000000000000",
+          "votes": "10000000000000000000000"
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": null
+      }
+    }
+  }
+}
+```
+
+<Note>
+Balance and votes are returned as strings representing wei (18 decimals). Divide by 10^18 for human-readable amounts.
+</Note>

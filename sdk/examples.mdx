@@ -125,8 +125,8 @@ export function DAOHeader({ daoId }: Props) {
         marginTop: '20px'
       }}>
         <StatCard label="Total Supply" value={formatNumber(dao.totalSupply)} />
-        <StatCard label="Voting Delay" value={`${dao.votingDelay} blocks`} />
-        <StatCard label="Voting Period" value={`${dao.votingPeriod} blocks`} />
+        <StatCard label="Voting Delay" value={formatDuration(dao.votingDelay)} />
+        <StatCard label="Voting Period" value={formatDuration(dao.votingPeriod)} />
         <StatCard label="Quorum" value={`${dao.quorumNumerator}%`} />
       </div>
     </header>
@@ -149,6 +149,15 @@ function StatCard({ label, value }: { label: string; value: string }) {
 function formatNumber(value: string): string {
   const num = BigInt(value) / BigInt(10 ** 18);
   return num.toLocaleString();
+}
+
+function formatDuration(seconds: string): string {
+  const num = Number(seconds);
+  const hours = Math.floor(num / 3600);
+  const days = Math.floor(hours / 24);
+  if (days > 0) return `${days}d`;
+  if (hours > 0) return `${hours}h`;
+  return `${Math.floor(num / 60)}m`;
 }
 ```
 
@@ -530,7 +539,7 @@ async function main() {
   console.log(`=== ${dao.name} ===`);
   console.log(`Token: ${dao.tokenSymbol}`);
   console.log(`Proposals: ${dao.proposalCount}`);
-  console.log(`Voting Period: ${dao.votingPeriod} blocks`);
+  console.log(`Voting Period: ${dao.votingPeriod} seconds`);
   console.log();
 
   // Get proposals
