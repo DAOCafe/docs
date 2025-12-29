@@ -11,8 +11,8 @@ DAO Café provides developer tools for the **CreateDAO** protocol — a governan
   <Card title="DAO Café Indexer" icon="database" href="/indexer/overview">
     High-performance GraphQL API for querying DAOs, proposals, votes, and delegations in real-time.
   </Card>
-  <Card title="Query DAOs" icon="magnifying-glass" href="/indexer/query-daos">
-    Learn all the ways to fetch DAO data from the API.
+  <Card title="daocafe-sdk" icon="cube" href="/sdk/overview">
+    TypeScript SDK with React hooks and TanStack Query integration for building governance apps.
   </Card>
 </CardGroup>
 
@@ -21,22 +21,39 @@ DAO Café provides developer tools for the **CreateDAO** protocol — a governan
 DAO Café indexes all governance activity from DAOs created via the CreateDAO factory contracts. It provides:
 
 - **Real-time GraphQL API** at `https://dao.cafe/graphql`
+- **TypeScript SDK** with React hooks for seamless integration
 - **Multi-chain support** for Base Mainnet and Sepolia Testnet
 - **Complete governance data**: DAOs, proposals, votes, delegations, and token holders
 
 ## Quick Links
 
-<CardGroup cols={3}>
+<CardGroup cols={4}>
   <Card title="GraphQL Playground" icon="circle-play" href="https://dao.cafe/graphql">
     Try queries interactively
   </Card>
-  <Card title="Indexer Overview" icon="book" href="/indexer/overview">
-    Understand the data model
+  <Card title="Indexer API" icon="book" href="/indexer/overview">
+    Data model & endpoints
   </Card>
-  <Card title="DAO Queries" icon="code" href="/indexer/query-daos">
-    Query examples & reference
+  <Card title="SDK" icon="code" href="/sdk/overview">
+    React hooks & queries
+  </Card>
+  <Card title="Live Demo" icon="rocket" href="https://demo.dao.cafe">
+    See it in action
   </Card>
 </CardGroup>
+
+## Demo Application
+
+Want to see DAO Café in action? Check out the [demo application](https://demo.dao.cafe) — a full-featured governance interface built with the SDK. Features include:
+
+- Browse DAOs across Base and Sepolia networks
+- View and vote on proposals
+- Create new proposals with IPFS metadata
+- Transaction simulation via Tenderly
+
+<Card title="View Demo Source" icon="github" href="https://github.com/dikobay/daocafe-demo">
+  Explore the demo app source code on GitHub for implementation examples.
+</Card>
 
 ## Supported Networks
 
@@ -44,3 +61,4 @@ DAO Café indexes all governance activity from DAOs created via the CreateDAO fa
 |---------|----------|--------|
 | Base Mainnet | 8453 | ✅ Live |
 | Sepolia Testnet | 11155111 | ✅ Live |
+
