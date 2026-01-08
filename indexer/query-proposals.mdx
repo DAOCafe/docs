@@ -24,9 +24,9 @@ query GetAllProposals {
       proposer
       description
       state
-      votesFor
-      votesAgainst
-      votesAbstain
+      forVotes
+      againstVotes
+      abstainVotes
       voteStart
       voteEnd
     }
@@ -48,8 +48,8 @@ query GetActiveProposals {
     items {
       id
       description
-      votesFor
-      votesAgainst
+      forVotes
+      againstVotes
       voteEnd
     }
   }
@@ -78,8 +78,8 @@ query GetExecutedProposals {
     items {
       id
       description
-      votesFor
-      votesAgainst
+      forVotes
+      againstVotes
     }
   }
 }
@@ -103,9 +103,9 @@ query GetDAOProposals($daoId: String!) {
       proposer
       description
       state
-      votesFor
-      votesAgainst
-      votesAbstain
+      forVotes
+      againstVotes
+      abstainVotes
       voteStart
       voteEnd
     }
@@ -140,9 +140,9 @@ query GetProposal($id: String!) {
     values
     calldatas
     state
-    votesFor
-    votesAgainst
-    votesAbstain
+    forVotes
+    againstVotes
+    abstainVotes
     voteStart
     voteEnd
     eta
@@ -185,9 +185,9 @@ query GetProposalWithVotes($id: String!) {
     id
     description
     state
-    votesFor
-    votesAgainst
-    votesAbstain
+    forVotes
+    againstVotes
+    abstainVotes
     votes(limit: 50, orderBy: "weight", orderDirection: "desc") {
       items {
         voter
@@ -237,9 +237,9 @@ query GetBaseProposals {
 | `calldatas` | [String] | Encoded function calls |
 | `signatures` | [String] | Function signatures (optional) |
 | `state` | Enum | Current proposal state |
-| `votesFor` | BigInt | Total FOR votes |
-| `votesAgainst` | BigInt | Total AGAINST votes |
-| `votesAbstain` | BigInt | Total ABSTAIN votes |
+| `forVotes` | BigInt | Total FOR votes |
+| `againstVotes` | BigInt | Total AGAINST votes |
+| `abstainVotes` | BigInt | Total ABSTAIN votes |
 | `voteStart` | BigInt | Voting start timestamp |
 | `voteEnd` | BigInt | Voting end timestamp |
 | `eta` | BigInt | Execution time (when queued) |

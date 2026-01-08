@@ -200,8 +200,8 @@ export function ProposalList({ daoId }: Props) {
 }
 
 function ProposalCard({ proposal }: { proposal: Proposal }) {
-  const forVotes = BigInt(proposal.votesFor);
-  const againstVotes = BigInt(proposal.votesAgainst);
+  const forVotes = BigInt(proposal.forVotes);
+  const againstVotes = BigInt(proposal.againstVotes);
   const totalVotes = forVotes + againstVotes;
   const forPercent = totalVotes > 0 
     ? Number((forVotes * 100n) / totalVotes) 
@@ -241,8 +241,8 @@ function ProposalCard({ proposal }: { proposal: Proposal }) {
           fontSize: '12px',
           marginTop: '5px'
         }}>
-          <span style={{ color: '#22c55e' }}>For: {formatVotes(proposal.votesFor)}</span>
-          <span style={{ color: '#ef4444' }}>Against: {formatVotes(proposal.votesAgainst)}</span>
+          <span style={{ color: '#22c55e' }}>For: {formatVotes(proposal.forVotes)}</span>
+          <span style={{ color: '#ef4444' }}>Against: {formatVotes(proposal.againstVotes)}</span>
         </div>
       </div>
     </li>

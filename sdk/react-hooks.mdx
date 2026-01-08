@@ -199,9 +199,9 @@ function ProposalDetail({ proposalId }: { proposalId: string }) {
     <div>
       <h2>{proposal.description}</h2>
       <div>
-        <span>For: {proposal.votesFor}</span>
-        <span>Against: {proposal.votesAgainst}</span>
-        <span>Abstain: {proposal.votesAbstain}</span>
+        <span>For: {proposal.forVotes}</span>
+        <span>Against: {proposal.againstVotes}</span>
+        <span>Abstain: {proposal.abstainVotes}</span>
       </div>
       <p>State: {proposal.state}</p>
     </div>

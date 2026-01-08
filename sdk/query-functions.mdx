@@ -111,7 +111,7 @@ const { items } = await getProposals({
 
 items.forEach(proposal => {
   console.log(`Proposal: ${proposal.description.slice(0, 50)}...`);
-  console.log(`Votes: For ${proposal.votesFor} / Against ${proposal.votesAgainst}`);
+  console.log(`Votes: For ${proposal.forVotes} / Against ${proposal.againstVotes}`);
 });
 ```
 
@@ -130,8 +130,8 @@ const proposal = await getProposal(proposalId);
 
 if (proposal) {
   console.log(`State: ${proposal.state}`);
-  console.log(`For: ${proposal.votesFor}`);
-  console.log(`Against: ${proposal.votesAgainst}`);
+  console.log(`For: ${proposal.forVotes}`);
+  console.log(`Against: ${proposal.againstVotes}`);
 }
 ```
 

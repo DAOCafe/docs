@@ -84,9 +84,9 @@ interface Proposal {
   voteEnd: string;
   eta: string | null;
   /** Vote tallies */
-  votesFor: string;
-  votesAgainst: string;
-  votesAbstain: string;
+  forVotes: string;
+  againstVotes: string;
+  abstainVotes: string;
   state: ProposalState;
   createdAt: string;
   blockNumber: string;
