@@ -47,6 +47,7 @@
               "indexer/overview",
               "indexer/query-daos",
               "indexer/query-proposals",
+              "indexer/decoded-actions",
               "indexer/query-votes",
               "indexer/query-delegation",
               "indexer/query-token-holders"

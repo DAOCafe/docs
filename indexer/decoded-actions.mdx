@@ -1,0 +1,334 @@
+---
+title: Decoded Actions
+description: Human-readable proposal actions decoded from calldata
+---
+
+# Decoded Actions
+
+The DAO Café indexer automatically decodes proposal calldata into human-readable format. This feature uses the [4bytes.directory](https://www.4byte.directory/) API to look up function signatures and decode the parameters.
+
+**Endpoint:** `https://dao.cafe/graphql`
+
+---
+
+## How It Works
+
+When a proposal is created on-chain, the calldata (raw encoded function calls) is decoded into a structured format:
+
+1. **Extract Selector**: The first 4 bytes of the calldata are extracted as the function selector
+2. **Lookup Signature**: The selector is looked up in the 4bytes.directory API
+3. **Decode Parameters**: Using the signature, the remaining calldata is decoded into typed parameters
+4. **Store Result**: The decoded actions are stored alongside the raw calldata
+
+---
+
+## Query Decoded Actions
+
+Fetch a proposal with its decoded actions:
+
+```graphql
+query GetProposalWithDecodedActions($id: String!) {
+  proposal(id: $id) {
+    id
+    description
+    state
+    targets
+    values
+    calldatas
+    decodedActions
+  }
+}
+```
+
+---
+
+## Response Structure
+
+The `decodedActions` field returns an array of decoded actions, one for each target/calldata pair in the proposal:
+
+### Successful Decoding
+
+```json
+{
+  "decodedActions": [
+    {
+      "index": 0,
+      "target": "0xe2bfada6771b3e2d0a2b8a1d13e27090fa1a4c71",
+      "value": "0",
+      "calldata": "0x0dbec5ea00000000000000000000000000000000000000000000000000000000000001f4",
+      "decoded": {
+        "status": "success",
+        "functionName": "setFee",
+        "signature": "setFee(uint256)",
+        "args": [
+          {
+            "name": "arg0",
+            "type": "uint256",
+            "value": "500"
+          }
+        ],
+        "summary": "setFee(500)"
+      }
+    }
+  ]
+}
+```
+
+### Failed Decoding
+
+When the function selector is not found in 4bytes.directory:
+
+```json
+{
+  "decodedActions": [
+    {
+      "index": 0,
+      "target": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+      "value": "1000000000000000000",
+      "calldata": "0xabc12345...",
+      "decoded": {
+        "status": "error",
+        "error": "Function selector not found in 4bytes directory",
+        "selector": "0xabc12345",
+        "hint": "Submit the contract ABI at https://www.4byte.directory/api/v1/import-solidity/ to enable decoding"
+      }
+    }
+  ]
+}
+```
+
+### ETH Transfer (Empty Calldata)
+
+When a proposal action is a pure ETH transfer:
+
+```json
+{
+  "decodedActions": [
+    {
+      "index": 0,
+      "target": "0x742d35Cc6634C0532925a3b844Bc9e7595f...",
+      "value": "1000000000000000000",
+      "calldata": "0x",
+      "decoded": {
+        "status": "success",
+        "functionName": "transfer",
+        "signature": "transfer()",
+        "args": [],
+        "summary": "ETH Transfer"
+      }
+    }
+  ]
+}
+```
+
+---
+
+## Multi-Action Proposals
+
+Proposals can have multiple actions. Each action is decoded independently:
+
+```graphql
+query GetMultiActionProposal($id: String!) {
+  proposal(id: $id) {
+    id
+    description
+    decodedActions
+  }
+}
+```
+
+Example response with 3 actions:
+
+```json
+{
+  "proposal": {
+    "id": "11155111_0xf3dfd...efc6da8_302905...",
+    "description": "# Treasury Management\n\nUpdate fee structure and transfer funds",
+    "decodedActions": [
+      {
+        "index": 0,
+        "target": "0xe2bfada6771b3e2d0a2b8a1d13e27090fa1a4c71",
+        "value": "0",
+        "calldata": "0x0dbec5ea...",
+        "decoded": {
+          "status": "success",
+          "functionName": "setFee",
+          "signature": "setFee(uint256)",
+          "args": [{ "name": "arg0", "type": "uint256", "value": "500" }],
+          "summary": "setFee(500)"
+        }
+      },
+      {
+        "index": 1,
+        "target": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        "value": "0",
+        "calldata": "0xa9059cbb...",
+        "decoded": {
+          "status": "success",
+          "functionName": "transfer",
+          "signature": "transfer(address,uint256)",
+          "args": [
+            { "name": "arg0", "type": "address", "value": "0x742d35Cc6634C0532925a3b844Bc9e7595f..." },
+            { "name": "arg1", "type": "uint256", "value": "1000000000" }
+          ],
+          "summary": "transfer(0x742d35Cc...595f, 1000000000)"
+        }
+      },
+      {
+        "index": 2,
+        "target": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+        "value": "1000000000000000000",
+        "calldata": "0xabc12345...",
+        "decoded": {
+          "status": "error",
+          "error": "Function selector not found in 4bytes directory",
+          "selector": "0xabc12345",
+          "hint": "Submit the contract ABI at https://www.4byte.directory/api/v1/import-solidity/ to enable decoding"
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## DecodedAction Type Reference
+
+### DecodedAction
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `index` | Int | Order of action in proposal (0-indexed) |
+| `target` | String | Target contract address |
+| `value` | String | ETH value in wei |
+| `calldata` | String | Original raw calldata (hex) |
+| `decoded` | Object | Decoded data or error info |
+
+### Decoded (Success)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | String | Always `"success"` |
+| `functionName` | String | Function name (e.g., `"setFee"`) |
+| `signature` | String | Full signature (e.g., `"setFee(uint256)"`) |
+| `args` | Array | Decoded arguments |
+| `summary` | String | Human-readable one-liner |
+
+### Decoded (Error)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | String | Always `"error"` |
+| `error` | String | Error message |
+| `selector` | String | The 4-byte function selector |
+| `hint` | String | How to fix the issue |
+
+### DecodedArg
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Generic name (`arg0`, `arg1`, etc.) |
+| `type` | String | Solidity type (`uint256`, `address`, etc.) |
+| `value` | String | Stringified value |
+
+---
+
+## Adding Missing Signatures
+
+If a function selector is not found in 4bytes.directory, you can submit it:
+
+### Via API
+
+```bash
+curl -X POST https://www.4byte.directory/api/v1/signatures/ \
+  -H "Content-Type: application/json" \
+  -d '{"text_signature": "myFunction(uint256,address)"}'
+```
+
+### Via Contract ABI
+
+```bash
+curl -X POST https://www.4byte.directory/api/v1/import-solidity/ \
+  -H "Content-Type: application/json" \
+  -d '{"contract_abi": "[{\"type\":\"function\",\"name\":\"myFunction\",...}]"}'
+```
+
+### Via Solidity File
+
+```bash
+curl -F source_file=@Contract.sol https://www.4byte.directory/api/v1/import-solidity/
+```
+
+<Tip>
+After submitting your signature, future proposals using that function will be decoded automatically.
+</Tip>
+
+---
+
+## UI Display Example
+
+Here's how you might display decoded actions in your frontend:
+
+```tsx
+function ProposalActions({ decodedActions }) {
+  return (
+    <div className="actions-list">
+      {decodedActions.map((action) => (
+        <div key={action.index} className="action-card">
+          <div className="action-header">
+            Action {action.index + 1}
+            {action.decoded.status === 'success' ? (
+              <span className="badge success">{action.decoded.summary}</span>
+            ) : (
+              <span className="badge error">Unknown Function</span>
+            )}
+          </div>
+          
+          <div className="action-details">
+            <div>Target: {action.target}</div>
+            <div>Value: {action.value} wei</div>
+            
+            {action.decoded.status === 'success' && (
+              <div className="args">
+                {action.decoded.args.map((arg, i) => (
+                  <div key={i}>
+                    {arg.name}: {arg.value} ({arg.type})
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {action.decoded.status === 'error' && (
+              <div className="error-hint">
+                {action.decoded.hint}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+## SDK Support
+
+The `decodedActions` field is available through the daocafe-sdk:
+
+```typescript
+import { getProposal } from 'daocafe-sdk';
+
+const proposal = await getProposal('11155111_0xf3dfd...efc6da8_302905...');
+
+// Access decoded actions
+proposal.decodedActions?.forEach(action => {
+  if (action.decoded.status === 'success') {
+    console.log(`${action.index}: ${action.decoded.summary}`);
+  } else {
+    console.log(`${action.index}: Unknown function (${action.decoded.selector})`);
+  }
+});
+```
