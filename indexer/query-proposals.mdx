@@ -116,7 +116,7 @@ query GetDAOProposals($daoId: String!) {
 Variables:
 ```json
 {
-  "daoId": "8453_0xGovernorAddress"
+  "daoId": "1_0xGovernorAddress"
 }
 ```
 
@@ -207,8 +207,8 @@ query GetProposalWithVotes($id: String!) {
 Filter proposals by network.
 
 ```graphql
-query GetBaseProposals {
-  proposals(where: { chainId: 8453 }, limit: 10) {
+query GetEthereumProposals {
+  proposals(where: { chainId: 1 }, limit: 10) {
     items {
       id
       daoId

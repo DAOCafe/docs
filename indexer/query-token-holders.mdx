@@ -52,7 +52,7 @@ query GetDAOTokenHolders($daoId: String!) {
 **Variables:**
 ```json
 {
-  "daoId": "8453_0xd6d4933c668b2070b3bd44f7420224fcbdb87378"
+  "daoId": "1_0xd6d4933c668b2070b3bd44f7420224fcbdb87378"
 }
 ```
 
@@ -100,7 +100,7 @@ query GetTokenHolder($id: String!) {
 
 <Note>
 The holder ID format is: `chainId_tokenAddress_holderAddress` (all lowercase).
-Example: `8453_0xb67b87d2f26928784f51a0e263a0f7a9a5efd833_0x983332bb0b689ed97907f658525d19f4d876d96c`
+Example: `1_0xb67b87d2f26928784f51a0e263a0f7a9a5efd833_0x983332bb0b689ed97907f658525d19f4d876d96c`
 </Note>
 
 ---
@@ -164,7 +164,7 @@ Filter results where `votes > balance` to identify addresses that have received 
 |-------|------|-------------|
 | `id` | String | Composite ID: `chainId_token_holder` |
 | `daoId` | String | Reference to DAO (`chainId_governor`) |
-| `chainId` | Int | Network chain ID (8453 for Base, 11155111 for Sepolia) |
+| `chainId` | Int | Network chain ID (1 for Ethereum, 11155111 for Sepolia) |
 | `token` | Address | Governance token contract address |
 | `holder` | Address | Token holder address |
 | `balance` | BigInt | Token balance (in wei) |
@@ -182,13 +182,13 @@ Filter results where `votes > balance` to identify addresses that have received 
     "tokenHolders": {
       "items": [
         {
-          "id": "8453_0xb67b87..._0x11e97f37...",
+          "id": "1_0xb67b87..._0x11e97f37...",
           "holder": "0x11e97f37b15c54b7400ee647ab7795334bd518ce",
           "balance": "990000000000000000000000",
           "votes": "990000000000000000000000"
         },
         {
-          "id": "8453_0xb67b87..._0x983332bb...",
+          "id": "1_0xb67b87..._0x983332bb...",
           "holder": "0x983332bb0b689ed97907f658525d19f4d876d96c",
           "balance": "10000000000000000000000",
           "votes": "10000000000000000000000"
