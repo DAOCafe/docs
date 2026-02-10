@@ -54,7 +54,7 @@ Fetch a single DAO using its composite ID (`chainId_governorAddress`).
 
 ```graphql
 query GetDAOById {
-  dao(id: "0x742236f55a5e43B1AAec404527cE6986E02cD700") {
+  dao(id: "1_0xGovernorAddress") {
     id
     name
     governor
@@ -300,6 +300,7 @@ Here's a complete list of fields you can query on a DAO:
 | `votingPeriod` | BigInt | Voting duration |
 | `proposalThreshold` | BigInt | Tokens to propose |
 | `quorumNumerator` | BigInt | Quorum % numerator |
+| `timelockMinDelay` | BigInt | Timelock execution delay |
 | `createdAt` | BigInt | Creation timestamp |
 | `blockNumber` | BigInt | Creation block |
 | `transactionHash` | Hex | Creation tx hash |
